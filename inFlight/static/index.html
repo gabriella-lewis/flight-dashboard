@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Open Sky Flight Tracker</title>
+     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+     <link rel="stylesheet" type="text/css" href="styles.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script> 
+    <script src="https://rawgit.com/bbecquet/Leaflet.RotatedMarker/master/leaflet.rotatedMarker.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <div id="sidebar">
+        <h3>Live Stats</h3>
+          <p id = "flightsCountInAir">Flights in Air: </p>
+          <p id = "flightsCountOnGround">Flights on Ground: </p>
+          <!-- <p id = "avgVelocity">Average Velocity: </p>
+          <p id = "avgAltitude">Average Altitude: </p> -->
+        <h3>Filters</h3>
+        <label for="inFlight">In Flight:</label>
+        <select id="inFlight">
+          <option value=""> </option>
+          <option value="True">True</option>
+          <option value="False">False</option>
+        </select>
+        <br>  
+        <label for="airline">Airline: </label>
+        <select id="airline">
+          <option value=""> </option>
+          <option value="DAL">Delta Air Lines</option>
+          <option value="UAL">United Air Lines</option>
+          <option value="AAL">American Air Lines</option>
+        </select>
+        <h3>Sort</h3>
+        <label for="sort">Sort By:</label>
+        <select id="sort">
+          <option value=" "> </option>
+          <option value="Velocity">Velocity</option>
+          <option value="Geometric Altitude">Geometric Altitude</option>
+        </select>
+        <h3>Active Flights:</h3>
+        <ul id="flightList"></ul>
+      </div>
+      <div id="map" style="height:750px;"></div>
+      <script>
+        var map = L.map('map').setView([33.75, -84.4], 10);
+        var trajectoryLayer = L.layerGroup().addTo(map);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        var planeIcon = L.icon({
+          iconUrl: 'images/plane_new.png',
+          iconSize: [20, 20]
+        })
+
+        var flightMarkers = {}
+        var flightData = []
+
+        // get weather tiles from OpenWeatherMap API
+        function addWeather() {
+          const windLayer = L.tileLayer("/weather/wind_new/{z}/{x}/{y}.png",
+            {attribution: "OpenWeatherMap", opacity: 1})
+
+          const temperatureLayer = L.tileLayer("/weather/temp_new/{z}/{x}/{y}.png",
+            {attribution: "OpenWeatherMap", opacity: 1})
+
+          const precipitationLayer = L.tileLayer("/weather/precipitation_new/{z}/{x}/{y}.png",
+            {attribution: "OpenWeatherMap", opacity: 1})
+
+          const cloudLayer = L.tileLayer("/weather/clouds_new/{z}/{x}/{y}.png",
+            {attribution: "OpenWeatherMap", opacity: 1})
+
+          const weatherOverlays = {
+            "Precipitation": precipitationLayer,
+            "Temperature": temperatureLayer,
+            "Wind": windLayer,
+            "Clouds": cloudLayer
+          };
+
+          L.control.layers(null, weatherOverlays, { collapsed: false }).addTo(map);
+
+          console.log('weather added');
+        }
+
+
+        // retrieve flight information from OpenSky API
+        async function retrieveFlights() {
+          url = '/get_flights'
+          try {
+            const response = await fetch(url);
+
+            if (!response.ok) {
+              throw new Error(`Response status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.length > 0){
+              flightData = data;
+            } else {
+              console.log("no flights found");
+            }
+            console.log("data retrieved");
+
+            let inAirCount = 0;
+            let onGroundCount = 0;
+
+            data.forEach(flight => {
+              // create & set markers for lat and long
+              if (flight.icao24 in flightMarkers) {
+                flightMarkers[flight.icao24].setLatLng([flight.latitude, flight.longitude])
+              } else {
+                if (flight.latitude && flight.longitude) {
+                  const marker = L.marker([flight.latitude, flight.longitude], 
+                  {icon: planeIcon,
+                    rotationAngle: flight.true_track || 0,
+                    rotationOrigin: "center center"
+                  })
+                  .addTo(map)
+                  .bindPopup(
+                    `${flight.callsign}
+                    <br>Velocity: ${flight.velocity} m/s
+                    <br>Geo_Altitude: ${flight.geo_altitude} m
+                    <br>Baro_Altitude: ${flight.baro_altitude} m
+                    <br>In Flight: ${!flight.on_ground}
+                    `);
+
+                  marker.on("click", async() => {
+                    await showTrajectory(flight.icao24);
+                  });
+                  flightMarkers[flight.icao24] = marker;
+                }
+              }
+
+              //set statistics
+              if (!flight.on_ground) {
+                inAirCount += 1;
+              } else {
+                onGroundCount += 1;
+              }
+            });
+
+            document.getElementById("flightsCountInAir").innerText = `Flights in Air: ${inAirCount}`;
+            document.getElementById("flightsCountOnGround").innerText = `Flights on Ground: ${onGroundCount}`;
+
+            // update list of flights on sidebar
+            updateFlightList();
+
+          } catch (error) {
+            console.error("could not fetch flight info");
+          }
+        }
+
+        // gets polyline for flights (past trajectory)
+        async function showTrajectory(icao24) {
+          trajectoryLayer.clearLayers();
+          try {
+            const response = await fetch(`/get_trajectory/${icao24}`)
+            const trajectory = await response.json();
+
+            if (trajectory) {
+              const latlngs = trajectory.map(p => [p.latitude, p.longitude]);
+              const polyline = L.polyline(latlngs, {color: "red"}).addTo(trajectoryLayer);
+            }
+          } catch (err) {
+            console.error("error fetching trajectory");
+          }
+        }
+
+        // updates list of flights in sidebar
+        function updateFlightList() {
+          const list = document.getElementById("flightList");
+          const sortBy = document.getElementById("sort").value;
+          const inAirFilter = document.getElementById("inFlight").value;
+          const airlineFilter = document.getElementById("airline").value;
+          list.innerHTML = '';
+
+          // filter list to in flight or on ground
+          let filteredData = [...flightData];
+          if (inAirFilter === "True") {
+            filteredData = filteredData.filter(f => f.on_ground === false);
+          } else if (inAirFilter === "False") {
+            filteredData = filteredData.filter(f => f.on_ground === true);
+          }
+
+          if (airlineFilter) {
+            filteredData = filteredData.filter(f => f.callsign.toUpperCase().startsWith(airlineFilter.toUpperCase()));
+          }
+
+          Object.values(flightMarkers).forEach(marker => map.removeLayer(marker));
+
+          filteredData.forEach(f => {
+            if (flightMarkers[f.icao24]) {
+              map.addLayer(flightMarkers[f.icao24]);
+            }
+          });
+
+          // sort list by velocity or geometric altitude
+          const sortedList = filteredData.sort((a, b) => {
+            if (sortBy === "Velocity") {
+              return (b.velocity || 0) - (a.velocity || 0);
+            } else if (sortBy === "Geometric Altitude") {
+              return (b.geo_altitude || 0) - (a.geo_altitude || 0);
+            }
+            return 0;
+          });
+
+          // create list element for each flight item
+          filteredData.forEach(flight => {
+            if (!flight.callsign) return;
+
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>${flight.callsign}</strong>
+                            <span>Velocity: ${flight.velocity || 0} m/s</span> 
+                            <br><span>Geometric Altitude: ${flight.geo_altitude || 0} m</span>
+                            <br><span>In Flight: ${!flight.on_ground || 'false'}</span>
+                            `;
+            
+            // add event listener so that map snaps to plane's current position when clicked
+            li.addEventListener("click", async () => {
+              if (flight.latitude && flight.longitude) {
+                map.setView([flight.latitude, flight.longitude], 10);
+                if (flightMarkers[flight.icao24]) flightMarkers[flight.icao24].openPopup();
+              }
+              await showTrajectory(flight.icao24)
+            });
+
+            list.appendChild(li);
+          });
+        }
+
+        addWeather();
+        retrieveFlights();
+        // setInterval(retrieveFlights, 5000);
+        document.getElementById("sort").addEventListener("change", updateFlightList);
+        document.getElementById("inFlight").addEventListener("change", updateFlightList);
+        document.getElementById("airline").addEventListener("change", updateFlightList);
+      </script>
+    </div>
+  </body>
+</html>
