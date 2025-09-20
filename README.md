@@ -1,6 +1,6 @@
 # Live Aviation Data Dashboard  
 
-A real-time dashboard for tracking global flights, built with **FastAPI**, **Python REST APIs**, and a **Leaflet.js frontend**.  
+A real-time dashboard for tracking global flights, built with **FastAPI**, **Python REST APIs**, and a frontend using **HTML, JavaScript, and Leaflet.js**.  
 
 This project processes and visualizes live **aircraft telemetry** and **weather data**, with features like:  
 - Real-time flight tracking  
@@ -14,10 +14,6 @@ This project processes and visualizes live **aircraft telemetry** and **weather 
 ## Demo  
 
 ### Screenshots  
-<!-- | Flight List & Filters | Trajectory Plotting | Weather Overlay |  
-|----------------------|---------------------|----------------|  
-| ![Flight list screenshot](screenshots/flightList.png) | ![Trajectory plotting screenshot](screenshots/trajectory.png) | ![Weather overlay screenshot](screenshots/precipitation.png) |   -->
-
 
 ### Weather Overlay  
 ![Weather overlay screenshot](screenshots/precipitation.png) 
@@ -29,16 +25,10 @@ This project processes and visualizes live **aircraft telemetry** and **weather 
 
 ---
 
-### GIF Demo  
-
-![Weather Layers Demo](screenshots/weather.gif)  
-
----
-
 ## Tech Stack  
 
 - **Backend:** Python, FastAPI, REST APIs  
-- **Frontend:** JavaScript, Leaflet.js  
+- **Frontend:** HTML, JavaScript, Leaflet.js  
 - **Data Sources:**  
   - [OpenSky Network API](https://opensky-network.org/) for live flight data  
   - [OpenWeather API](https://openweathermap.org/api) for weather overlays  
