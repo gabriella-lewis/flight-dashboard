@@ -14,19 +14,29 @@ This project processes and visualizes live **aircraft telemetry** and **weather 
 ## Demo  
 
 ### Screenshots  
-| Flight List & Filters | Trajectory Plotting | Weather Overlay |  
+<!-- | Flight List & Filters | Trajectory Plotting | Weather Overlay |  
 |----------------------|---------------------|----------------|  
-| ![Flight list screenshot](screenshots/flightList.png) | ![Trajectory plotting screenshot](screenshots/trajectory.png) | ![Weather overlay screenshot](screenshots/precipitation.png) |  
+| ![Flight list screenshot](screenshots/flightList.png) | ![Trajectory plotting screenshot](screenshots/trajectory.png) | ![Weather overlay screenshot](screenshots/precipitation.png) |   -->
 
 
-### GIF / Video Demo  
-Sometimes a GIF or short video says it best. You can drop in a screen recording here:  
+### Weather Overlay  
+![Weather overlay screenshot](screenshots/precipitation.png) 
 
-- **GIF:**  
-  ![Dashboard demo](screenshots/dashboard_demo.gif)  
+---
 
-- **Video (optional):**  
-  [▶️ Watch the demo](https://your-link-here.com)  
+### Trajectory Plotting  
+![Trajectory plotting screenshot](screenshots/trajectory.png) 
+
+---
+
+### Flight List & Filters  
+![Flight list screenshot](screenshots/flightList.png)  
+
+
+
+### GIF Demo  
+
+![Weather Layers Demo](screenshots/weather.gif)  
 
 ---
 
