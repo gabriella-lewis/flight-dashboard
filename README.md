@@ -16,7 +16,7 @@ This project processes and visualizes live **aircraft telemetry** and **weather 
 ### Screenshots  
 | Flight List & Filters | Trajectory Plotting | Weather Overlay |  
 |----------------------|---------------------|----------------|  
-| ![Flight list screenshot](screenshots/flight_list.png) | ![Trajectory plotting screenshot](screenshots/trajectory.png) | ![Weather overlay screenshot](screenshots/weather.png) |  
+| ![Flight list screenshot](screenshots/flightList.png) | ![Trajectory plotting screenshot](screenshots/trajectory.png) | ![Weather overlay screenshot](screenshots/precipitation.png) |  
 
 
 ### GIF / Video Demo  
