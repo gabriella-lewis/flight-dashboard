@@ -235,7 +235,7 @@
 
         addWeather();
         retrieveFlights();
-        // setInterval(retrieveFlights, 5000);
+        setInterval(retrieveFlights, 5000);
         document.getElementById("sort").addEventListener("change", updateFlightList);
         document.getElementById("inFlight").addEventListener("change", updateFlightList);
         document.getElementById("airline").addEventListener("change", updateFlightList);
