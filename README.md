@@ -29,11 +29,6 @@ This project processes and visualizes live **aircraft telemetry** and **weather 
 
 ---
 
-### Flight List & Filters  
-![Flight list screenshot](screenshots/flightList.png)  
-
-
-
 ### GIF Demo  
 
 ![Weather Layers Demo](screenshots/weather.gif)  
